@@ -16,7 +16,7 @@ import cn.finalteam.rxgalleryfinal.RxGalleryFinalApi;
 import id.zelory.compressor.Compressor;
 
 
-class Compression {
+public class Compression {
 
     public File compressImage(final Activity activity, final ReadableMap options, final String originalImagePath) throws IOException {
         Integer maxWidth = options.hasKey("width") ? options.getInt("width") : null;

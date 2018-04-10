@@ -1,4 +1,4 @@
-package fubao.android.imagepicker;
+package com.mg.app;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -42,7 +42,7 @@ import cn.finalteam.rxgalleryfinal.rxbus.event.ImageRadioResultEvent;
 import cn.finalteam.rxgalleryfinal.ui.RxGalleryListener;
 import cn.finalteam.rxgalleryfinal.ui.base.IRadioImageCheckedListener;
 
-class PickerModule extends ReactContextBaseJavaModule {
+public class PickerModule extends ReactContextBaseJavaModule {
     private static final String E_ACTIVITY_DOES_NOT_EXIST = "E_ACTIVITY_DOES_NOT_EXIST";
 
     private Promise mPickerPromise;
