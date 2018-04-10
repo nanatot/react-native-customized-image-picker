@@ -1,10 +1,12 @@
-package com.mg.app;
+package fubao.android.imagepicker;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
+import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import com.facebook.react.bridge.Promise;
@@ -62,12 +64,12 @@ class PickerModule extends ReactContextBaseJavaModule {
     private int maxSize = 9;
     private int compressQuality = -1;
     private boolean returnAfterShot = false;
-    private boolean multipleShot  = false;
-    private int spanCount = 3;
+    private boolean multipleShot = false;
     private final ReactApplicationContext mReactContext;
 
     private Compression compression = new Compression();
     private ReadableMap options;
+
     PickerModule(ReactApplicationContext reactContext) {
         super(reactContext);
         mReactContext = reactContext;
@@ -95,7 +97,6 @@ class PickerModule extends ReactContextBaseJavaModule {
         isHidePreview = options.hasKey("isHidePreview") && options.getBoolean("isHidePreview");
         isHideVideoPreview = options.hasKey("isHideVideoPreview") && options.getBoolean("isHideVideoPreview");
         isPlayGif = options.hasKey("isPlayGif") && options.getBoolean("isPlayGif");
-        spanCount = options.hasKey("spanCount") ? options.getInt("spanCount") : spanCount;
 
         imageLoader = options.hasKey("imageLoader") ? options.getString("imageLoader") : imageLoader;
         this.options = options;
@@ -103,32 +104,40 @@ class PickerModule extends ReactContextBaseJavaModule {
 
     private static String getMimeType(String url) {
         String type = null;
-        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
-        if (extension != null) {
-            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        if (!TextUtils.isEmpty(url)){
+            int index = url.lastIndexOf(".");
+            if (index > -1){
+                String extType = url.substring(index);
+                String extension = MimeTypeMap.getFileExtensionFromUrl(extType);
+                if (extension != null) {
+                    type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+                }
+            }
+
         }
 
         return type;
     }
 
-    private WritableMap getAsyncSelection(final Activity activity,String path) throws Exception {
+    private WritableMap getAsyncSelection(final Activity activity, String path) throws Exception {
         String mime = getMimeType(path);
         if (mime != null && mime.startsWith("video/")) {
-            return  getVideo(activity, path, mime);
+            return getVideo(activity, path, mime);
         }
 
-        return getImage(activity,path);
+        return getImage(activity, path);
     }
 
     private WritableMap getAsyncSelection(final Activity activity, ImageCropBean result) throws Exception {
 
         String path = result.getOriginalPath();
-        return getAsyncSelection(activity,path);
+        return getAsyncSelection(activity, path);
     }
-    private WritableMap getAsyncSelection(final Activity activity,MediaBean result) throws Exception {
+
+    private WritableMap getAsyncSelection(final Activity activity, MediaBean result) throws Exception {
 
         String path = result.getOriginalPath();
-        return getAsyncSelection(activity,path);
+        return getAsyncSelection(activity, path);
     }
 
     private WritableMap getVideo(Activity activity, String path, String mime) throws Exception {
@@ -144,7 +153,7 @@ class PickerModule extends ReactContextBaseJavaModule {
         return video;
     }
 
-    private WritableMap getImage(final Activity activity,String path) throws Exception {
+    private WritableMap getImage(final Activity activity, String path) throws Exception {
         WritableMap image = new WritableNativeMap();
         if (path.startsWith("http://") || path.startsWith("https://")) {
             throw new Exception("Cannot select remote files");
@@ -173,13 +182,15 @@ class PickerModule extends ReactContextBaseJavaModule {
     private WritableMap getImage(final Activity activity, ImageCropBean result) throws Exception {
 
         String path = result.getOriginalPath();
-        return getImage(activity,path);
+        return getImage(activity, path);
     }
-    private WritableMap getImage(final Activity activity,MediaBean result) throws Exception {
+
+    private WritableMap getImage(final Activity activity, MediaBean result) throws Exception {
 
         String path = result.getOriginalPath();
-        return getImage(activity,path);
+        return getImage(activity, path);
     }
+
     private void initImageLoader(Activity activity) {
 
         ImageLoaderConfiguration.Builder config = new ImageLoaderConfiguration.Builder(activity);
@@ -204,41 +215,40 @@ class PickerModule extends ReactContextBaseJavaModule {
         initImageLoader(activity);
         mPickerPromise = promise;
 
-        RxGalleryFinal rxGalleryFinal =  RxGalleryFinal.with(activity);
-        rxGalleryFinal.spanCount(spanCount);
-        if(openCameraOnStart){
+        RxGalleryFinal rxGalleryFinal = RxGalleryFinal.with(activity);
+        if (openCameraOnStart) {
             rxGalleryFinal.openCameraOnStart();
-        }else if(!isCamera){
+        } else if (!isCamera) {
             rxGalleryFinal.hideCamera();
         }
-        if(compressQuality>0){
+        if (compressQuality > 0) {
             rxGalleryFinal.cropropCompressionQuality(compressQuality);
         }
-        if(title != null){
+        if (title != null) {
             rxGalleryFinal.setTitle(title);
         }
-        if(returnAfterShot){
+        if (returnAfterShot) {
             rxGalleryFinal.returnAfterShot();
         }
-        if(multipleShot){
+        if (multipleShot) {
             rxGalleryFinal.multipleShot();
         }
-        if(isVideo){
+        if (isVideo) {
             rxGalleryFinal.video();
-        }else {
+        } else {
             rxGalleryFinal.image();
         }
-        if(isHidePreview){
+        if (isHidePreview) {
             rxGalleryFinal.hidePreview();
         }
-        if (isHideVideoPreview){
+        if (isHideVideoPreview) {
             rxGalleryFinal.videoPreview();
         }
-        if(isPlayGif){
+        if (isPlayGif) {
             rxGalleryFinal.gif();
         }
-        if (imageLoader != null){
-            switch (imageLoader){
+        if (imageLoader != null) {
+            switch (imageLoader) {
                 case "PICASSO":
                     rxGalleryFinal.imageLoader(ImageLoaderType.PICASSO);
                     break;
@@ -254,13 +264,13 @@ class PickerModule extends ReactContextBaseJavaModule {
                 default:
                     break;
             }
-        }else{
+        } else {
             rxGalleryFinal.imageLoader(ImageLoaderType.GLIDE);
         }
-        if(!this.multiple) {
-            if(cropping){
+        if (!this.multiple) {
+            if (cropping) {
                 rxGalleryFinal.crop();
-                rxGalleryFinal.cropMaxResultSize(this.width,this.height);
+                rxGalleryFinal.cropMaxResultSize(this.width, this.height);
                 //裁剪图片的回调
                 RxGalleryListener
                         .getInstance()
@@ -270,7 +280,7 @@ class PickerModule extends ReactContextBaseJavaModule {
                                     public void cropAfter(Object t) {
                                         WritableArray resultArr = new WritableNativeArray();
                                         try {
-                                            resultArr.pushMap(getAsyncSelection(activity,t.toString()));
+                                            resultArr.pushMap(getAsyncSelection(activity, t.toString()));
                                         } catch (Exception e) {
                                             e.printStackTrace();
                                         }
@@ -288,10 +298,10 @@ class PickerModule extends ReactContextBaseJavaModule {
                     .subscribe(new RxBusResultDisposable<ImageRadioResultEvent>() {
                         @Override
                         protected void onEvent(ImageRadioResultEvent imageRadioResultEvent) throws Exception {
-                            if(!cropping){
+                            if (!cropping) {
                                 ImageCropBean result = imageRadioResultEvent.getResult();
                                 WritableArray resultArr = new WritableNativeArray();
-                                resultArr.pushMap(getAsyncSelection(activity,result));
+                                resultArr.pushMap(getAsyncSelection(activity, result));
                                 mPickerPromise.resolve(resultArr);
                             }
                         }
@@ -306,8 +316,8 @@ class PickerModule extends ReactContextBaseJavaModule {
                         protected void onEvent(ImageMultipleResultEvent imageMultipleResultEvent) throws Exception {
                             List<MediaBean> list = imageMultipleResultEvent.getResult();
                             WritableArray resultArr = new WritableNativeArray();
-                            for(MediaBean bean:list){
-                                resultArr.pushMap(getAsyncSelection(activity,bean));
+                            for (MediaBean bean : list) {
+                                resultArr.pushMap(getAsyncSelection(activity, bean));
                             }
                             mPickerPromise.resolve(resultArr);
                         }
@@ -344,23 +354,23 @@ class PickerModule extends ReactContextBaseJavaModule {
             initImageLoader(activity);
             mPickerPromise = promise;
 
-            RxGalleryFinal rxGalleryFinal =  RxGalleryFinal.with(activity);
-            if(compressQuality>0){
+            RxGalleryFinal rxGalleryFinal = RxGalleryFinal.with(activity);
+            if (compressQuality > 0) {
                 rxGalleryFinal.cropropCompressionQuality(compressQuality);
             }
             rxGalleryFinal.openCameraOnStart();
             rxGalleryFinal.returnAfterShot();
-            if(isVideo){
+            if (isVideo) {
                 rxGalleryFinal.video();
-            }else {
+            } else {
                 rxGalleryFinal.image();
             }
 
-            if(isPlayGif){
+            if (isPlayGif) {
                 rxGalleryFinal.gif();
             }
-            if (imageLoader != null){
-                switch (imageLoader){
+            if (imageLoader != null) {
+                switch (imageLoader) {
                     case "PICASSO":
                         rxGalleryFinal.imageLoader(ImageLoaderType.PICASSO);
                         break;
@@ -376,13 +386,13 @@ class PickerModule extends ReactContextBaseJavaModule {
                     default:
                         break;
                 }
-            }else{
+            } else {
                 rxGalleryFinal.imageLoader(ImageLoaderType.GLIDE);
             }
-            if(!this.multiple) {
-                if(cropping){
+            if (!this.multiple) {
+                if (cropping) {
                     rxGalleryFinal.crop();
-                    rxGalleryFinal.cropMaxResultSize(this.width,this.height);
+                    rxGalleryFinal.cropMaxResultSize(this.width, this.height);
                     //裁剪图片的回调
                     RxGalleryListener
                             .getInstance()
@@ -392,7 +402,7 @@ class PickerModule extends ReactContextBaseJavaModule {
                                         public void cropAfter(Object t) {
                                             WritableArray resultArr = new WritableNativeArray();
                                             try {
-                                                resultArr.pushMap(getAsyncSelection(activity,t.toString()));
+                                                resultArr.pushMap(getAsyncSelection(activity, t.toString()));
                                             } catch (Exception e) {
                                                 e.printStackTrace();
                                             }
@@ -410,10 +420,10 @@ class PickerModule extends ReactContextBaseJavaModule {
                         .subscribe(new RxBusResultDisposable<ImageRadioResultEvent>() {
                             @Override
                             protected void onEvent(ImageRadioResultEvent imageRadioResultEvent) throws Exception {
-                                if(!cropping){
+                                if (!cropping) {
                                     ImageCropBean result = imageRadioResultEvent.getResult();
                                     WritableArray resultArr = new WritableNativeArray();
-                                    resultArr.pushMap(getAsyncSelection(activity,result));
+                                    resultArr.pushMap(getAsyncSelection(activity, result));
                                     mPickerPromise.resolve(resultArr);
                                 }
                             }
@@ -422,6 +432,7 @@ class PickerModule extends ReactContextBaseJavaModule {
             }
         }
     }
+
     private String getBase64StringFromFile(String absoluteFilePath) {
         InputStream inputStream;
 
